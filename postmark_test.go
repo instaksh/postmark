@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 
+	"github.com/awnumar/memguard"
 	"goji.io"
 )
 
@@ -24,7 +25,11 @@ func init() {
 		},
 	}
 
-	client = NewClient("", "")
+	testGuard, err := memguard.NewImmutableFromBytes([]byte("test"))
+	if err != nil {
+		panic(err.Error())
+	}
+	client = NewClient(testGuard, testGuard)
 	client.HTTPClient = &http.Client{Transport: transport}
 	client.BaseURL = tServer.URL
 }

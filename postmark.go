@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/awnumar/memguard"
 )
 
 var (
@@ -18,9 +20,9 @@ type Client struct {
 	// HTTPClient is &http.Client{} by default
 	HTTPClient *http.Client
 	// Server Token: Used for requests that require server level privileges. This token can be found on the Credentials tab under your Postmark server.
-	ServerToken string
+	ServerToken *memguard.LockedBuffer
 	// AccountToken: Used for requests that require account level privileges. This token is only accessible by the account owner, and can be found on the Account tab of your Postmark account.
-	AccountToken string
+	AccountToken *memguard.LockedBuffer
 	// BaseURL is the root API endpoint
 	BaseURL string
 }
@@ -45,7 +47,7 @@ type parameters struct {
 // NewClient builds a new Client pointer using the provided tokens, a default HTTPClient, and a default API base URL
 // Accepts `Server Token`, and `Account Token` as arguments
 // http://developer.postmarkapp.com/developer-api-overview.html#authentication
-func NewClient(serverToken string, accountToken string) *Client {
+func NewClient(serverToken, accountToken *memguard.LockedBuffer) *Client {
 	return &Client{
 		HTTPClient:   &http.Client{},
 		ServerToken:  serverToken,
@@ -75,10 +77,10 @@ func (client *Client) doRequest(opts parameters, dst interface{}) error {
 
 	switch opts.TokenType {
 	case account_token:
-		req.Header.Add("X-Postmark-Account-Token", client.AccountToken)
+		req.Header.Add("X-Postmark-Account-Token", string(client.AccountToken.Buffer()))
 
 	default:
-		req.Header.Add("X-Postmark-Server-Token", client.ServerToken)
+		req.Header.Add("X-Postmark-Server-Token", string(client.ServerToken.Buffer()))
 	}
 
 	res, err := client.HTTPClient.Do(req)
