@@ -93,6 +93,9 @@ func (client *Client) doRequest(opts parameters, dst interface{}) error {
 	}
 
 	err = json.Unmarshal(body, dst)
+	if err != nil {
+		return fmt.Errorf("[%d] Non-JSON response: %s", res.StatusCode, string(body))
+	}
 	return err
 }
 
